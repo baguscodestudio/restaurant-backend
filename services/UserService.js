@@ -9,30 +9,6 @@ export default class UserService {
     this.password = password;
   }
 
-  async isAuthenticated(token) {
-    if (token) {
-      jwt.verify(token, ACCESS_TOKEN_SECRET, (err, decoded) => {
-        if (err) {
-          return {
-            message: "Failed to authenticate",
-            success: false,
-          };
-        } else {
-          return {
-            message: "Authenticated",
-            success: true,
-            data: decoded,
-          };
-        }
-      });
-    } else {
-      return {
-        message: "No Token",
-        success: false,
-      };
-    }
-  }
-
   async login() {
     try {
       const [rows, fields] = await connection.execute(
@@ -41,12 +17,15 @@ export default class UserService {
       );
       if (rows.length > 0) {
         const user = rows[0];
-        console.log("password: " + this.password);
+        const [profiles, fields] = await connection.execute(
+          "SELECT * FROM profile WHERE userid=? LIMIT 1",
+          [user.userid]
+        );
         const isPasswordEqual = await bcrypt.compare(
           this.password,
           user.password
         );
-        console.log("password from db: " + user.password);
+        user.role = profiles[0].role;
         if (isPasswordEqual) {
           const token = jwt.sign({ user: user }, ACCESS_TOKEN_SECRET, {
             expiresIn: "1d",
