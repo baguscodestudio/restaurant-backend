@@ -80,7 +80,6 @@ app.post(
       } else {
         const decoded = decodedFromToken;
         const decodedUser = decoded.user;
-        console.log(decoded);
 
         req.verifiedUser = decodedUser;
         next();
@@ -178,9 +177,166 @@ app.get("/getRoles", async (req, res) => {
     user.role = list[user.userid];
   });
 
-  res.json({
-    users,
-  });
+  res.json(users);
+});
+
+app.get("/users", async (req, res) => {
+  const [users, userFields] = await connection.execute("SELECT * FROM user");
+  res.json(users);
+});
+
+app.post("/updateUser", async (req, res, next) => {
+  const { userid, username, password } = req.body;
+  if (userid && username && password) {
+    const hashedPassword = await bcrypt.hash(password, 10);
+    const [result, fields] = await connection.execute(
+      "UPDATE user SET username=?, password=? WHERE userid=?",
+      [username, hashedPassword, userid]
+    );
+    if (result.affectedRows > 0) {
+      res.json({
+        success: true,
+        message: "Updated user successfully",
+      });
+    } else {
+      res.json({
+        success: false,
+        message: "No rows were updated",
+      });
+    }
+  } else {
+    res.json({
+      success: false,
+      message: "Incomplete arguments, expected 3 (username, password, userid)",
+    });
+  }
+});
+
+app.post("/updateUsername", async (req, res, next) => {
+  const { userid, username } = req.body;
+  if (userid && username) {
+    const [result, fields] = await connection.execute(
+      "UPDATE user SET username=? WHERE userid=?",
+      [username, userid]
+    );
+
+    if (result.affectedRows > 0) {
+      res.json({
+        success: true,
+        message: "Updated username successfully",
+      });
+    } else {
+      res.json({
+        success: false,
+        message: "No rows were updated",
+      });
+    }
+  } else {
+    res.json({
+      success: false,
+      message: "Incomplete arguments, expected 2 (username, userid)",
+    });
+  }
+});
+
+app.post("/deleteUser", async (req, res, next) => {
+  const { userid } = req.body;
+  if (userid) {
+    const [result, fields] = await connection.execute(
+      "DELETE FROM user WHERE userid=?",
+      [userid]
+    );
+    if (result.affectedRows > 0) {
+      res.json({
+        success: true,
+        message: "Deleted user successfully",
+      });
+    } else {
+      res.json({
+        success: false,
+        message: "No rows were updated",
+      });
+    }
+  } else {
+    res.json({
+      success: false,
+      message: "Incomplete arguments, expected 1 (userid)",
+    });
+  }
+});
+
+app.post("/updateRole", async (req, res, next) => {
+  const { userid, role } = req.body;
+  if (userid && role) {
+    const [profile, profileFields] = await connection.execute(
+      "SELECT * FROM profile WHERE userid=?",
+      [userid]
+    );
+    if (profile.length > 0) {
+      const [result, field] = await connection.execute(
+        "UPDATE profile SET role=? WHERE userid=?",
+        [role, userid]
+      );
+      if (result.affectedRows > 0) {
+        res.json({
+          success: true,
+          message: "Updated role successfully",
+        });
+      } else {
+        res.json({
+          success: false,
+          message: "No rows were updated",
+        });
+      }
+    } else {
+      const [result, field] = await connection.execute(
+        "INSERT INTO profile VALUES (?,?)",
+        [userid, role]
+      );
+      if (result.affectedRows > 0) {
+        res.json({
+          success: true,
+          message: "Assigned role successfully",
+        });
+      } else {
+        res.send(500).json({
+          success: false,
+          message: "No rows were updated",
+        });
+      }
+    }
+  } else {
+    res.send(400).json({
+      success: false,
+      message: "Incomplete arguments, expected 2 (userid, role)",
+    });
+  }
+});
+
+app.post("/removeRole", async (req, res, next) => {
+  const { userid } = req.body;
+  if (userid) {
+    const [result, field] = await connection.execute(
+      "DELETE FROM profile WHERE userid=?",
+      [userid]
+    );
+    if (result.affectedRows > 0) {
+      res.json({
+        success: true,
+        message: "Assigned role successfully",
+      });
+    } else {
+      res.send(500).json({
+        success: false,
+        message: "No rows were updated",
+      });
+    }
+  } else {
+    res.send(400).json({
+      success: false,
+      message: "Incomplete arguments, expected 2 (userid, role)",
+    });
+  }
 });
 
 app.listen(PORT, () => {
