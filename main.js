@@ -52,14 +52,14 @@ app.post("/login", async (req, res, next) => {
           },
         });
       } else {
-        res.json({ message: "Invalid password", success: false });
+        res.status(400).json({ message: "Invalid password", success: false });
       }
     } else {
-      res.json({ message: "No such user", success: false });
+      res.status(400).json({ message: "No such user", success: false });
     }
   } catch (e) {
     console.log(e);
-    res.json({ message: "An error occured", success: false });
+    res.status(500).json({ message: "An error occured", success: false });
   }
 });
 
@@ -67,10 +67,10 @@ app.post(
   "/token",
   (req, res, next) => {
     const token = req.headers.authorization.split(" ")[1];
-    if (token == null) return res.sendStatus(401);
+    if (token == null) return res.statusStatus(401);
     jwt.verify(token, ACCESS_TOKEN_SECRET, (err, decodedFromToken) => {
       if (err) {
-        res.json({
+        res.status(500).json({
           tokenVerificationData: {
             access: false,
             message: "Failed to verify token",
@@ -148,14 +148,14 @@ app.get("/getRole/:id", async (req, res, next) => {
         role: profiles[0].role,
       });
     } else {
-      res.json({
+      res.status(500).json({
         success: true,
         username: users[0].username,
         role: "Not Assigned",
       });
     }
   } else {
-    res.json({
+    res.status(500).json({
       success: false,
       message: "User not found",
     });
@@ -199,13 +199,13 @@ app.post("/updateUser", async (req, res, next) => {
         message: "Updated user successfully",
       });
     } else {
-      res.json({
+      res.status(500).json({
         success: false,
         message: "No rows were updated",
       });
     }
   } else {
-    res.json({
+    res.status(400).json({
       success: false,
       message: "Incomplete arguments, expected 3 (username, password, userid)",
     });
@@ -226,13 +226,13 @@ app.post("/updateUsername", async (req, res, next) => {
         message: "Updated username successfully",
       });
     } else {
-      res.json({
+      res.status(500).json({
         success: false,
         message: "No rows were updated",
       });
     }
   } else {
-    res.json({
+    res.status(400).json({
       success: false,
       message: "Incomplete arguments, expected 2 (username, userid)",
     });
@@ -252,13 +252,13 @@ app.post("/deleteUser", async (req, res, next) => {
         message: "Deleted user successfully",
       });
     } else {
-      res.json({
+      res.status(500).json({
         success: false,
         message: "No rows were updated",
       });
     }
   } else {
-    res.json({
+    res.status(400).json({
       success: false,
       message: "Incomplete arguments, expected 1 (userid)",
     });
@@ -283,7 +283,7 @@ app.post("/updateRole", async (req, res, next) => {
           message: "Updated role successfully",
         });
       } else {
-        res.json({
+        res.status(500).json({
           success: false,
           message: "No rows were updated",
         });
@@ -299,14 +299,14 @@ app.post("/updateRole", async (req, res, next) => {
           message: "Assigned role successfully",
         });
       } else {
-        res.send(500).json({
+        res.status(500).json({
           success: false,
           message: "No rows were updated",
         });
       }
     }
   } else {
-    res.send(400).json({
+    res.status(400).json({
       success: false,
       message: "Incomplete arguments, expected 2 (userid, role)",
     });
@@ -326,13 +326,13 @@ app.post("/removeRole", async (req, res, next) => {
         message: "Assigned role successfully",
       });
     } else {
-      res.send(500).json({
+      res.status(500).json({
         success: false,
         message: "No rows were updated",
       });
     }
   } else {
-    res.send(400).json({
+    res.status(400).json({
       success: false,
       message: "Incomplete arguments, expected 2 (userid, role)",
     });
