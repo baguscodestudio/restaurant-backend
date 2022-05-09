@@ -1,9 +1,24 @@
-import express from "express";
-import cors from "cors";
-import jwt from "jsonwebtoken";
-import * as bcrypt from "bcrypt";
-import connection from "./models/index";
-import { ACCESS_TOKEN_SECRET, PORT } from "./config";
+// import express from "express";
+// import cors from "cors";
+// import jwt from "jsonwebtoken";
+// import * as bcrypt from "bcrypt";
+// import connection from "./models/index";
+// import { ACCESS_TOKEN_SECRET, PORT } from "./config";
+const express = require("express");
+const cors = require("cors");
+const jwt = require("jsonwebtoken");
+const bcrypt = require("bcrypt");
+
+//db
+const connection = require("./models/index");
+
+//config
+const { ACCESS_TOKEN_SECRET, PORT } = require("./config");
+
+//routes
+const menuitem = require("./routes/menuitem");
+const role = require("./routes/role");
+const useraccount = require("./routes/useraccount");
 
 const app = express();
 app.use(express.json());
@@ -66,8 +81,17 @@ app.post("/login", async (req, res, next) => {
 app.post(
   "/token",
   (req, res, next) => {
-    const token = req.headers.authorization.split(" ")[1];
-    if (token == null) return res.statusStatus(401);
+    const header = req.headers.authorization;
+    if (!header) {
+      res.status(401).json({
+        tokenVerificationData: {
+          access: false,
+          message: "Token not provided",
+        },
+      });
+      return;
+    }
+    const token = header.split(" ")[1];
     jwt.verify(token, ACCESS_TOKEN_SECRET, (err, decodedFromToken) => {
       if (err) {
         res.status(500).json({
@@ -130,304 +154,11 @@ app.post("/register", async (req, res, next) => {
   }
 });
 
-app.get("/getRole/:id", async (req, res, next) => {
-  const [profiles, profileFields] = await connection.execute(
-    "SELECT role FROM profile WHERE userid=?",
-    [req.params.id]
-  );
-  const [users, userFields] = await connnection.execute(
-    "SELECT userid,username FROM user WHERE userid=?",
-    [req.params.id]
-  );
+app.use("/useraccounts", useraccount);
 
-  if (users.length > 0) {
-    if (profiles.length > 0) {
-      res.json({
-        success: true,
-        username: users[0].username,
-        role: profiles[0].role,
-      });
-    } else {
-      res.status(500).json({
-        success: true,
-        username: users[0].username,
-        role: "Not Assigned",
-      });
-    }
-  } else {
-    res.status(500).json({
-      success: false,
-      message: "User not found",
-    });
-  }
-});
+app.use("/roles", role);
 
-app.get("/getRoles", async (req, res) => {
-  const [profiles, profileFields] = await connection.execute(
-    "SELECT * FROM profile"
-  );
-  const [users, userFields] = await connection.execute(
-    "SELECT userid, username FROM user"
-  );
-  let list = {};
-  profiles.map((profile) => {
-    list[profile.userid] = profile.role;
-  });
-  users.map((user) => {
-    user.role = list[user.userid];
-  });
-
-  res.json(users);
-});
-
-app.get("/users", async (req, res) => {
-  const [users, userFields] = await connection.execute("SELECT * FROM user");
-  res.json(users);
-});
-
-app.post("/updateUser", async (req, res, next) => {
-  const { userid, username, password } = req.body;
-  if (userid && username && password) {
-    const hashedPassword = await bcrypt.hash(password, 10);
-    const [result, fields] = await connection.execute(
-      "UPDATE user SET username=?, password=? WHERE userid=?",
-      [username, hashedPassword, userid]
-    );
-    if (result.affectedRows > 0) {
-      res.json({
-        success: true,
-        message: "Updated user successfully",
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: "No rows were updated",
-      });
-    }
-  } else {
-    res.status(400).json({
-      success: false,
-      message: "Incomplete arguments, expected 3 (username, password, userid)",
-    });
-  }
-});
-
-app.post("/updateUsername", async (req, res, next) => {
-  const { userid, username } = req.body;
-  if (userid && username) {
-    const [result, fields] = await connection.execute(
-      "UPDATE user SET username=? WHERE userid=?",
-      [username, userid]
-    );
-
-    if (result.affectedRows > 0) {
-      res.json({
-        success: true,
-        message: "Updated username successfully",
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: "No rows were updated",
-      });
-    }
-  } else {
-    res.status(400).json({
-      success: false,
-      message: "Incomplete arguments, expected 2 (username, userid)",
-    });
-  }
-});
-
-app.post("/deleteUser", async (req, res, next) => {
-  const { userid } = req.body;
-  if (userid) {
-    const [result, fields] = await connection.execute(
-      "DELETE FROM user WHERE userid=?",
-      [userid]
-    );
-    if (result.affectedRows > 0) {
-      res.json({
-        success: true,
-        message: "Deleted user successfully",
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: "No rows were updated",
-      });
-    }
-  } else {
-    res.status(400).json({
-      success: false,
-      message: "Incomplete arguments, expected 1 (userid)",
-    });
-  }
-});
-
-app.post("/updateRole", async (req, res, next) => {
-  const { userid, role } = req.body;
-  if (userid && role) {
-    const [profile, profileFields] = await connection.execute(
-      "SELECT * FROM profile WHERE userid=?",
-      [userid]
-    );
-    if (profile.length > 0) {
-      const [result, field] = await connection.execute(
-        "UPDATE profile SET role=? WHERE userid=?",
-        [role, userid]
-      );
-      if (result.affectedRows > 0) {
-        res.json({
-          success: true,
-          message: "Updated role successfully",
-        });
-      } else {
-        res.status(500).json({
-          success: false,
-          message: "No rows were updated",
-        });
-      }
-    } else {
-      const [result, field] = await connection.execute(
-        "INSERT INTO profile VALUES (?,?)",
-        [userid, role]
-      );
-      if (result.affectedRows > 0) {
-        res.json({
-          success: true,
-          message: "Assigned role successfully",
-        });
-      } else {
-        res.status(500).json({
-          success: false,
-          message: "No rows were updated",
-        });
-      }
-    }
-  } else {
-    res.status(400).json({
-      success: false,
-      message: "Incomplete arguments, expected 2 (userid, role)",
-    });
-  }
-});
-
-app.post("/removeRole", async (req, res, next) => {
-  const { userid } = req.body;
-  if (userid) {
-    const [result, field] = await connection.execute(
-      "DELETE FROM profile WHERE userid=?",
-      [userid]
-    );
-    if (result.affectedRows > 0) {
-      res.json({
-        success: true,
-        message: "Assigned role successfully",
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: "No rows were updated",
-      });
-    }
-  } else {
-    res.status(400).json({
-      success: false,
-      message: "Incomplete arguments, expected 2 (userid, role)",
-    });
-  }
-});
-
-app.get("/items", async (req, res) => {
-  const [result, field] = await connection.execute("SELECT * FROM item");
-  res.json(result);
-});
-
-app.post("/addItem", async (req, res) => {
-  const { name, price, category, description, photo } = req.body;
-
-  if (name && price && category && description && photo) {
-    const [result, field] = await connection.execute(
-      "INSERT INTO item (name, price, description, category, photo) VALUES (?,?,?,?,?)",
-      [name, price, description, category, photo]
-    );
-
-    if (result.affectedRows > 0) {
-      res.json({
-        success: true,
-        message: "Added item successfully",
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: "No rows were updated",
-      });
-    }
-  } else {
-    res.status(400).json({
-      success: false,
-      message:
-        "Incomplete arguments, expected 5 (name, price, category, description, photo)",
-    });
-  }
-});
-
-app.post("/updateItem", async (req, res) => {
-  const { itemid, name, price, category, description, photo } = req.body;
-  if (itemid && name && price && category && description && photo) {
-    const [result, field] = await connection.execute(
-      "UPDATE item SET name=?, price=?,description=?,category=?,photo=? WHERE itemid=?",
-      [name, price, description, category, photo, itemid]
-    );
-
-    if (result.affectedRows > 0) {
-      res.json({
-        success: true,
-        message: "Added item successfully",
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: "No rows were updated",
-      });
-    }
-  } else {
-    res.status(400).json({
-      success: false,
-      message:
-        "Incomplete arguments, expected 6 (itemid, name, price, category, description, photo)",
-    });
-  }
-});
-
-app.post("/removeItem", async (req, res) => {
-  const { itemid } = req.body;
-
-  if (itemid) {
-    const [result, field] = await connection.execute(
-      "DELETE FROM item WHERE itemid=?",
-      [itemid]
-    );
-
-    if (result.affectedRows > 0) {
-      res.json({
-        success: true,
-        message: "Removed item successfully",
-      });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: "No rows were updated",
-      });
-    }
-  } else {
-    res.status(400).json({
-      success: false,
-      message: "Incomplete arguments, expected 1 (itemid)",
-    });
-  }
-});
+app.use("/items", menuitem);
 
 app.listen(PORT, () => {
   console.log(`Listening on port ${PORT}`);
