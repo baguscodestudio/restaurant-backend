@@ -1,9 +1,3 @@
-// import express from "express";
-// import cors from "cors";
-// import jwt from "jsonwebtoken";
-// import * as bcrypt from "bcrypt";
-// import connection from "./models/index";
-// import { ACCESS_TOKEN_SECRET, PORT } from "./config";
 const express = require("express");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
@@ -16,6 +10,8 @@ const connection = require("./models/index");
 const { ACCESS_TOKEN_SECRET, PORT } = require("./config");
 
 //routes
+const cart = require("./routes/cart");
+const order = require("./routes/order");
 const menuitem = require("./routes/menuitem");
 const role = require("./routes/role");
 const useraccount = require("./routes/useraccount");
@@ -153,6 +149,10 @@ app.post("/register", async (req, res, next) => {
     return { message: "An error occured", success: false };
   }
 });
+
+app.use("/order", order);
+
+app.use("/cart", cart);
 
 app.use("/useraccounts", useraccount);
 
