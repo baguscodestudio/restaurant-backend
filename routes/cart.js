@@ -8,6 +8,30 @@ router.get("/", async (req, res) => {
   res.json(result);
 });
 
+router.get("/:id", async (req, res) => {
+  const tablenum = req.params.id;
+  if (tablenum) {
+    const [result, fields] = await connection.execute(
+      "SELECT * FROM cart WHERE tablenum=?",
+      [tablenum]
+    );
+
+    if (result.entries > 0) {
+      res.json(result);
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "No rows were selected",
+      });
+    }
+  } else {
+    res.status(400).json({
+      success: false,
+      message: "Incomplete arguments, expected 1 (params:Tablenum)",
+    });
+  }
+});
+
 router.post("/:id", async (req, res) => {
   const tablenum = req.params.id;
   const { item } = req.body;
