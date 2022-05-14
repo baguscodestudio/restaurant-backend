@@ -34,7 +34,7 @@ router.post("/", async (req, res) => {
 
 router.get("/", async (req, res) => {
   const [result, field] = await connection.execute("SELECT * FROM item");
-  res.json(result);
+  res.status(200).json(result);
 });
 
 router.put("/:id", async (req, res) => {

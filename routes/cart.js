@@ -12,12 +12,12 @@ router.get("/:id", async (req, res) => {
   const tablenum = req.params.id;
   if (tablenum) {
     const [result, fields] = await connection.execute(
-      "SELECT * FROM cart WHERE tablenum=?",
+      "SELECT * FROM cart LEFT JOIN item ON cart.itemid = item.itemid WHERE tablenum=?",
       [tablenum]
     );
 
-    if (result.entries > 0) {
-      res.json(result);
+    if (result.length > 0) {
+      res.status(200).json(result);
     } else {
       res.status(500).json({
         success: false,
