@@ -15,7 +15,6 @@ router.get("/", async (req, res) => {
       return {
         orderid: order.orderid,
         tablenum: order.tablenum,
-        status: order.status,
         total: order.price,
         items: result,
       };
@@ -40,7 +39,6 @@ router.get("/:table", async (req, res) => {
       res.status(200).json({
         orderid: result.orderid,
         tablenum: result.tablenum,
-        status: result.status,
         total: result.price,
         items: resultCart,
       });
@@ -53,14 +51,14 @@ router.get("/:table", async (req, res) => {
   } else {
     res.status(400).json({
       success: false,
-      message: "Incomplete arguments, expected 3 (tablenum, price, status)",
+      message: "Incomplete arguments, expected 2 (tablenum, price)",
     });
   }
 });
 
 router.post("/", async (req, res) => {
-  const { tablenum, price, status } = req.body;
-  if (tablenum && price && status) {
+  const { tablenum, price } = req.body;
+  if (tablenum && price) {
     const [resultExist, fieldExist] = await connection.execute(
       "SELECT * FROM `order` WHERE tablenum=?",
       [tablenum]
@@ -72,8 +70,8 @@ router.post("/", async (req, res) => {
       });
     } else {
       const [result, field] = await connection.execute(
-        "INSERT INTO `order` (tablenum, price, `status`) VALUES (?,?,?)",
-        [tablenum, price, status]
+        "INSERT INTO `order` (tablenum, price) VALUES (?,?)",
+        [tablenum, price]
       );
 
       if (result.affectedRows > 0) {
@@ -91,7 +89,55 @@ router.post("/", async (req, res) => {
   } else {
     res.status(400).json({
       success: false,
-      message: "Incomplete arguments, expected 3 (tablenum, price, status)",
+      message: "Incomplete arguments, expected 2 (tablenum, price)",
+    });
+  }
+});
+
+router.post("/complete/:id", async (req, res) => {
+  const orderid = req.params.id;
+  const { order } = req.body;
+  if (orderid && order) {
+    console.log(orderid, order.total, order.items);
+    const [result, field] = await connection.execute(
+      "INSERT INTO order_complete VALUES(?,?,?,?)",
+      [
+        orderid,
+        order.total,
+        JSON.stringify(order.items),
+        new Date().toISOString().slice(0, 19).replace("T", " "),
+      ]
+    );
+    if (result.affectedRows > 0) {
+      const [result, field] = await connection.execute(
+        "DELETE FROM `order` WHERE orderid=?",
+        [orderid]
+      );
+      const [resultCart, fieldCart] = await connection.execute(
+        "DELETE FROM cart WHERE tablenum=?",
+        [order.tablenum]
+      );
+      if (result.affectedRows > 0 && resultCart.affectedRows > 0) {
+        res.json({
+          success: true,
+          message: "Marked order complete successfully",
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: "No rows were updated",
+        });
+      }
+    } else {
+      res.status(500).json({
+        success: false,
+        message: "No rows were updated",
+      });
+    }
+  } else {
+    res.status(400).json({
+      success: false,
+      message: "Incomplete arguments, expected 2 (params:tablenum, body:order)",
     });
   }
 });

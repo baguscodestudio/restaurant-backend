@@ -1,6 +1,7 @@
 "use strict";
 const express = require("express");
 let router = express.Router();
+const bcrypt = require("bcrypt");
 const connection = require("../models/index");
 
 router.get("/", async (req, res) => {
