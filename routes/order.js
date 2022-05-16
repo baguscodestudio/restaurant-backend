@@ -56,6 +56,37 @@ router.get("/:table", async (req, res) => {
   }
 });
 
+router.post("/search", async (req, res) => {
+  const { query } = req.body;
+  if (query) {
+    const table = "`order`";
+    const [result, fields] = await connection.execute(
+      `SELECT * FROM ${table} WHERE tablenum LIKE '%${query}%'`
+    );
+    let orders = await Promise.all(
+      result.map(async (order, index) => {
+        const [result, fields] = await connection.execute(
+          "SELECT * FROM cart LEFT JOIN item ON cart.itemid = item.itemid WHERE tablenum=?",
+          [order.tablenum]
+        );
+
+        return {
+          orderid: order.orderid,
+          tablenum: order.tablenum,
+          total: order.price,
+          items: result,
+        };
+      })
+    );
+    res.status(200).json(orders);
+  } else {
+    res.status(400).json({
+      success: false,
+      message: "Incomplete arguments, expected 1 (query)",
+    });
+  }
+});
+
 router.post("/", async (req, res) => {
   const { tablenum, price } = req.body;
   if (tablenum && price) {

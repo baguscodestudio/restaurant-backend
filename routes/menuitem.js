@@ -37,6 +37,21 @@ router.get("/", async (req, res) => {
   res.status(200).json(result);
 });
 
+router.post("/search", async (req, res) => {
+  const { query } = req.body;
+  if (query) {
+    const [result, field] = await connection.execute(
+      `SELECT * FROM item WHERE name LIKE '%${query}%'`
+    );
+    res.status(200).json(result);
+  } else {
+    res.status(400).json({
+      success: false,
+      message: "Incomplete arguments, expected 1 (query)",
+    });
+  }
+});
+
 router.put("/:id", async (req, res) => {
   const itemid = req.params.id;
   const { name, price, category, description, photo } = req.body;

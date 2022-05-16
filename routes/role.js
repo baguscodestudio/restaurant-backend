@@ -55,6 +55,21 @@ router.get("/:id", async (req, res, next) => {
   }
 });
 
+router.post("/search", async (req, res) => {
+  const { query } = req.body;
+  if (query) {
+    const [result, field] = await connection.execute(
+      `SELECT * FROM user LEFT OUTER JOIN profile ON user.userid = profile.userid WHERE user.username LIKE '%${query}%'`
+    );
+    res.status(200).json(result);
+  } else {
+    res.status(400).json({
+      success: false,
+      message: "Incomplete arguments, expected 1 (query)",
+    });
+  }
+});
+
 router.put("/:id", async (req, res, next) => {
   const userid = req.params.id;
   const { role } = req.body;
