@@ -65,6 +65,21 @@ router.put("/password/:id", async (req, res, next) => {
   }
 });
 
+router.post("/search", async (req, res) => {
+  const { query } = req.body;
+  if (query) {
+    const [users, userFields] = await connection.execute(
+      `SELECT * FROM user WHERE username LIKE '%${query}%'`
+    );
+    res.json(users);
+  } else {
+    res.status(400).json({
+      success: false,
+      message: "Incomplete arguments, expected 1 (query)",
+    });
+  }
+});
+
 router.put("/:id", async (req, res, next) => {
   const userid = req.params.id;
   const { username, password } = req.body;
