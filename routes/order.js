@@ -127,16 +127,24 @@ router.post("/", async (req, res) => {
 
 router.post("/complete/:id", async (req, res) => {
   const orderid = req.params.id;
-  const { order } = req.body;
+  const { order, email } = req.body;
   if (orderid && order) {
-    console.log(orderid, order.total, order.items);
+    // console.log(orderid, order.total, order.items);
+    order.items.map((item) => {
+      connection.execute("INSERT INTO cart_complete VALUES(?,?,?)", [
+        orderid,
+        item.itemid,
+        item.quantiy,
+      ]);
+    });
     const [result, field] = await connection.execute(
-      "INSERT INTO order_complete VALUES(?,?,?,?)",
+      "INSERT INTO order_complete VALUES(?,?,?,?,?)",
       [
         orderid,
+        order.tablenum,
         order.total,
-        JSON.stringify(order.items),
         new Date().toISOString().slice(0, 19).replace("T", " "),
+        email,
       ]
     );
     if (result.affectedRows > 0) {
