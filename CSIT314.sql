@@ -15,19 +15,15 @@ INSERT INTO `user` (`userid`, `username`, `password`) VALUES
 	(11, 'Dishon', '$2b$10$vhFb24gMkUs97m8/gTtIy.6C9oRW8v9JQaro4nZjpmj8DiLQ37GLq'),
 	(12, 'staff', '$2b$10$P8.4D5B1t12BKOHP0cDlduboKsTLSnfRF13mV6qb/2FdWtFL55Z6u');
 
--- Dumping structure for table test.order
 CREATE TABLE IF NOT EXISTS `order` (
   `orderid` int(11) NOT NULL AUTO_INCREMENT,
   `tablenum` int(11) DEFAULT NULL,
   `price` float DEFAULT NULL,
   PRIMARY KEY (`orderid`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=latin1;
 
--- Dumping data for table test.order: ~1 rows (approximately)
-/*!40000 ALTER TABLE `order` DISABLE KEYS */;
 INSERT INTO `order` (`orderid`, `tablenum`, `price`) VALUES
 	(4, 3, 20);
-/*!40000 ALTER TABLE `order` ENABLE KEYS */;
 
 -- Dumping structure for table test.item
 CREATE TABLE IF NOT EXISTS `item` (
@@ -56,20 +52,16 @@ CREATE TABLE IF NOT EXISTS `cart` (
 INSERT INTO `cart` (`tablenum`, `itemid`, `quantity`) VALUES
 	(3, 1, 2),
 	(3, 2, 3);
-/*!40000 ALTER TABLE `cart` ENABLE KEYS */;
 
--- Dumping structure for table test.order_complete
 CREATE TABLE IF NOT EXISTS `order_complete` (
   `orderid` int(11) NOT NULL,
+  `tablenum` int(11) DEFAULT NULL,
   `price` int(11) NOT NULL,
-  `items` longtext NOT NULL,
   `visit` datetime DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`orderid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- Dumping data for table test.order_complete: ~0 rows (approximately)
-/*!40000 ALTER TABLE `order_complete` DISABLE KEYS */;
-/*!40000 ALTER TABLE `order_complete` ENABLE KEYS */;
 
 -- Dumping structure for table test.profile
 CREATE TABLE IF NOT EXISTS `profile` (
@@ -85,4 +77,14 @@ INSERT INTO `profile` (`userid`, `role`) VALUES
 	(6, 'admin'),
 	(11, 'manager'),
 	(12, 'staff');
+
+CREATE TABLE IF NOT EXISTS `cart_complete` (
+  `orderid` int(11) DEFAULT NULL,
+  `itemid` int(11) DEFAULT NULL,
+  `quantity` int(11) DEFAULT NULL,
+  KEY `FK__order_complete` (`orderid`),
+  KEY `FK_cart_complete_item` (`itemid`),
+  CONSTRAINT `FK__order_complete` FOREIGN KEY (`orderid`) REFERENCES `order_complete` (`orderid`) ON DELETE CASCADE ON UPDATE NO ACTION,
+  CONSTRAINT `FK_cart_complete_item` FOREIGN KEY (`itemid`) REFERENCES `item` (`itemid`) ON DELETE CASCADE ON UPDATE NO ACTION
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
