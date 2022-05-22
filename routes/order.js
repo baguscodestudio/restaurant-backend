@@ -126,27 +126,24 @@ router.post("/", async (req, res) => {
 });
 
 router.post("/complete/:id", async (req, res) => {
-  const orderid = req.params.id;
+  const orderid = parseInt(req.params.id);
   const { order, email } = req.body;
   if (orderid && order) {
-    // console.log(orderid, order.total, order.items);
+    let currentDate = new Date().toISOString().slice(0, 19).replace("T", " ");
+    console.log(orderid, order.tablenum, order.total, currentDate, email);
+    const [result, field] = await connection.execute(
+      "INSERT INTO order_complete VALUES (?,?,?,?,?)",
+      [orderid, order.tablenum, order.total, currentDate, email]
+    );
     order.items.map((item) => {
+      console.log(orderid, item.itemid, item.quantity, "test");
       connection.execute("INSERT INTO cart_complete VALUES(?,?,?)", [
         orderid,
         item.itemid,
-        item.quantiy,
+        item.quantity,
       ]);
     });
-    const [result, field] = await connection.execute(
-      "INSERT INTO order_complete VALUES(?,?,?,?,?)",
-      [
-        orderid,
-        order.tablenum,
-        order.total,
-        new Date().toISOString().slice(0, 19).replace("T", " "),
-        email,
-      ]
-    );
+    console.log("Berhasil lewat");
     if (result.affectedRows > 0) {
       const [result, field] = await connection.execute(
         "DELETE FROM `order` WHERE orderid=?",
