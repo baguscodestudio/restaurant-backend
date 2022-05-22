@@ -130,7 +130,6 @@ router.post("/complete/:id", async (req, res) => {
   const { order, email } = req.body;
   if (orderid && order) {
     let currentDate = new Date().toISOString().slice(0, 19).replace("T", " ");
-    console.log(orderid, order.tablenum, order.total, currentDate, email);
     const [result, field] = await connection.execute(
       "INSERT INTO order_complete VALUES (?,?,?,?,?)",
       [orderid, order.tablenum, order.total, currentDate, email]
@@ -143,7 +142,6 @@ router.post("/complete/:id", async (req, res) => {
         item.quantity,
       ]);
     });
-    console.log("Berhasil lewat");
     if (result.affectedRows > 0) {
       const [result, field] = await connection.execute(
         "DELETE FROM `order` WHERE orderid=?",
@@ -188,10 +186,28 @@ router.put("/:id", async (req, res) => {
       [price, orderid]
     );
     items.map(async (item, index) => {
-      const [result, field] = await connection.execute(
-        "UPDATE `cart` SET quantity=? WHERE tablenum=? AND itemid=?",
-        [item.quantity, item.tablenum, item.itemid]
-      );
+      if (item.quantity > 0) {
+        const [resultItem, fieldItem] = await connection.execute(
+          "SELECT * FROM `cart` WHERE tablenum=? AND itemid=?",
+          [item.tablenum, item.itemid]
+        );
+        if (resultItem.length > 0) {
+          const [result, field] = await connection.execute(
+            "UPDATE `cart` SET quantity=? WHERE tablenum=? AND itemid=?",
+            [item.quantity, item.tablenum, item.itemid]
+          );
+        } else {
+          const [result, field] = await connection.execute(
+            "INSERT INTO `cart` VALUES (?,?,?)",
+            [item.tablenum, item.itemid, item.quantity]
+          );
+        }
+      } else {
+        const [result, field] = await connection.execute(
+          "DELETE FROM `cart` WHERE tablenum=? AND itemid=?",
+          [item.tablenum, item.itemid]
+        );
+      }
     });
     if (result.affectedRows > 0) {
       res.json({
