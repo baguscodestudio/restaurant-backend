@@ -23,6 +23,19 @@ router.get("/", async (req, res) => {
   res.status(200).json(orders);
 });
 
+router.get("/completedOrders", async (req, res) => {
+  const [orders, ordersField] = await connection.execute(
+    "SELECT * FROM `order_complete`"
+  );
+  const [carts, cartsField] = await connection.execute(
+    "SELECT * FROM `cart_complete` LEFT JOIN item ON cart_complete.itemid = item.itemid"
+  );
+  res.status(200).json({
+    orders: orders,
+    carts: carts,
+  });
+});
+
 router.get("/:table", async (req, res) => {
   const tablenum = req.params.table;
 
@@ -37,9 +50,9 @@ router.get("/:table", async (req, res) => {
     );
     if (result.length > 0 && resultCart.length > 0) {
       res.status(200).json({
-        orderid: result.orderid,
-        tablenum: result.tablenum,
-        total: result.price,
+        orderid: result[0].orderid,
+        tablenum: result[0].tablenum,
+        total: result[0].price,
         items: resultCart,
       });
     } else {
@@ -135,7 +148,6 @@ router.post("/complete/:id", async (req, res) => {
       [orderid, order.tablenum, order.total, currentDate, email]
     );
     order.items.map((item) => {
-      console.log(orderid, item.itemid, item.quantity, "test");
       connection.execute("INSERT INTO cart_complete VALUES(?,?,?)", [
         orderid,
         item.itemid,
