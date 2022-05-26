@@ -15,6 +15,7 @@ const order = require("./routes/order");
 const menuitem = require("./routes/menuitem");
 const role = require("./routes/role");
 const useraccount = require("./routes/useraccount");
+const coupon = require("./routes/coupon");
 
 const app = express();
 app.use(express.json());
@@ -149,6 +150,8 @@ app.post("/register", async (req, res, next) => {
     return { message: "An error occured", success: false };
   }
 });
+
+app.use("/coupon", coupon);
 
 app.use("/order", order);
 

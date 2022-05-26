@@ -1,4 +1,4 @@
-CREATE DATABASE IF NOT EXISTS `test` /*!40100 DEFAULT CHARACTER SET latin1 */;
+CREATE DATABASE IF NOT EXISTS `test`
 USE `test`;
 
 CREATE TABLE IF NOT EXISTS `user` (
@@ -8,8 +8,6 @@ CREATE TABLE IF NOT EXISTS `user` (
   PRIMARY KEY (`userid`)
 ) ENGINE=InnoDB AUTO_INCREMENT=13 DEFAULT CHARSET=latin1;
 
--- Dumping data for table test.user: ~2 rows (approximately)
-/*!40000 ALTER TABLE `user` DISABLE KEYS */;
 INSERT INTO `user` (`userid`, `username`, `password`) VALUES
 	(6, 'Bagus', '$2b$10$aYmCP3mcwekEJZXlhfA79uOv19Sx8dj3eL8ceTjU0vodYIgLut0QS'),
 	(11, 'Dishon', '$2b$10$vhFb24gMkUs97m8/gTtIy.6C9oRW8v9JQaro4nZjpmj8DiLQ37GLq'),
@@ -25,7 +23,6 @@ CREATE TABLE IF NOT EXISTS `order` (
 INSERT INTO `order` (`orderid`, `tablenum`, `price`) VALUES
 	(4, 3, 20);
 
--- Dumping structure for table test.item
 CREATE TABLE IF NOT EXISTS `item` (
   `itemid` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(255) DEFAULT NULL,
@@ -62,8 +59,6 @@ CREATE TABLE IF NOT EXISTS `order_complete` (
   PRIMARY KEY (`orderid`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
-
--- Dumping structure for table test.profile
 CREATE TABLE IF NOT EXISTS `profile` (
   `userid` int(11) NOT NULL DEFAULT 0,
   `role` varchar(50) DEFAULT NULL,
@@ -71,8 +66,6 @@ CREATE TABLE IF NOT EXISTS `profile` (
   CONSTRAINT `userid` FOREIGN KEY (`userid`) REFERENCES `user` (`userid`) ON DELETE CASCADE ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
--- Dumping data for table test.profile: ~1 rows (approximately)
-/*!40000 ALTER TABLE `profile` DISABLE KEYS */;
 INSERT INTO `profile` (`userid`, `role`) VALUES
 	(6, 'admin'),
 	(11, 'manager'),
@@ -88,3 +81,13 @@ CREATE TABLE IF NOT EXISTS `cart_complete` (
   CONSTRAINT `FK_cart_complete_item` FOREIGN KEY (`itemid`) REFERENCES `item` (`itemid`) ON DELETE CASCADE ON UPDATE NO ACTION
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
+CREATE TABLE IF NOT EXISTS `coupon` (
+  `code` varchar(50) NOT NULL,
+  `discount` int(11) DEFAULT NULL,
+  `expire` date DEFAULT NULL,
+  PRIMARY KEY (`code`)
+) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+INSERT INTO `coupon` (`code`, `discount`, `expire`) VALUES
+	('FLASH50', 25, '2023-06-07'),
+	('TWOTWOTWENTYTWO', 26, '2022-07-25');
